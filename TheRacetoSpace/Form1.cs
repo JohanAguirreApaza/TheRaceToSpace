@@ -188,49 +188,6 @@ namespace TheRacetoSpace
         
 
 
-        //////////Colision del barril 
-        ////////if (obstaculo != null && obstaculo.ColisionaConBarril(pbAlien))
-        ////////{
-        ////////    // Volver a la posición previa para que no “se meta” en el barril
-        ////////    alien.Reaparecer(prevX, prevY);
-
-        ////////    // Congelar juego
-        ////////    juegoActivo = false;
-        ////////    // soltar inputs por si quedaron presionados
-        ////////    alien.SoltarDerecha();
-        ////////    alien.SoltarAgacharse();
-
-        ////////    timer.Stop(); //  detiene actualizaciones
-        ////////    puntaje.Detener();
-        ////////    MessageBox.Show("Haz muerto!!!");
-        ////////    this.Close();
-        ////////}
-        ////////if (obstaculo.ColisionaConAgujero(pbAlien))
-        ////////{
-        ////////    pbAlien.Visible = false;
-
-        ////////    juegoActivo = false;
-        ////////    timer.Stop();
-        ////////    puntaje.Detener();
-        ////////    MessageBox.Show("Haz muerto!!!");
-        ////////    this.Close();
-        ////////}
-        ////////if (obstaculo.ColisionaConPlatillo(pbAlien))
-        ////////{
-        ////////    pbAlien.Visible = false;
-
-        ////////    juegoActivo = false;
-        ////////    timer.Stop();
-        ////////    puntaje.Detener();
-        ////////    MessageBox.Show("Haz muerto!!!");
-        ////////    this.Close();
-
-
-        ////////}
-
-
-
-
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.D)
@@ -276,6 +233,11 @@ namespace TheRacetoSpace
         }
 
         private void lbPuntaje_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
         {
 
         }
