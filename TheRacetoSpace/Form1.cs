@@ -233,13 +233,13 @@ namespace TheRacetoSpace
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Right)
+            if (e.KeyCode == Keys.D)
             {
                 alien.PresionarDerecha();
                 obstaculo.ActivarPlatillo(); // aquí empieza a volar el platillo
             }
-            if (e.KeyCode == Keys.Up) alien.PresionarSalto();
-            if (e.KeyCode == Keys.Down) alien.PresionarAgacharse();
+            if (e.KeyCode == Keys.W) alien.PresionarSalto();
+            if (e.KeyCode == Keys.S) alien.PresionarAgacharse();
 
             //INICIO DE PUNTAJE 
 
