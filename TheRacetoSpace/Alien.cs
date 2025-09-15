@@ -10,7 +10,7 @@ namespace TheRacetoSpace
     internal class Alien
     {
         //VIDASSS
-        public int Vidas { get; private set; } = 5; // inicia con 5 vidas
+        public int Vidas { get; set; } = 5; // inicia con 5 vidas
 
         public bool EstaSaltando() => saltando;
         public int GetAltura() => pictureBox.Height;
@@ -27,9 +27,12 @@ namespace TheRacetoSpace
         private bool agachado = false;
 
         private int suelo;
-        private int alturaSalto = 80;
+        private int alturaSalto = 150;
         private int saltoActual = 0;
-        public int velocidadSalto = 5;
+        public int velocidadSalto = 6;
+        private bool firstTimeMoving = true;
+        public delegate void OnFirstMovementHandler(object sender, PuntajeArgs e);
+        public event OnFirstMovementHandler OnFirstMovement;
 
         public void PerderVida()
         {
@@ -54,7 +57,7 @@ namespace TheRacetoSpace
 
         public void PresionarSalto()
         {
-            if (!saltando)
+            if (saltando == false)
             {
                 saltando = true;
                 saltoActual = 0;
@@ -64,24 +67,39 @@ namespace TheRacetoSpace
         public void PresionarAgacharse() => agachado = true;
         public void SoltarAgacharse() => agachado = false;
 
-        // Llamar en cada Tick del Timer
+        // Llamar en cada tick del Timer
         public void Actualizar()
         {
             // Avanzar
             if (derecha)
+            {
                 PosX += Velocidad;
+                Console.WriteLine("PosX: " + PosX);
 
-            // Saltar
+                if (firstTimeMoving)
+                {
+                    this.firstTimeMoving = false;
+                    OnFirstMovement?.Invoke(this, new PuntajeArgs()
+                    {
+                        puntajeInicial = 100
+                    });
+                }
+            }
+
+            // Saltar (mas rapido)
             if (saltando)
             {
                 if (saltoActual < alturaSalto)
                 {
-                    PosY -= velocidadSalto; // sube
-                    saltoActual += velocidadSalto;
+                    // Aumenta la velocidad de salto
+                    int saltoRapido = velocidadSalto * 2;
+                    PosY -= saltoRapido; // sube más rápido
+                    saltoActual += saltoRapido;
                 }
                 else if (PosY < suelo)
                 {
-                    PosY += velocidadSalto; // baja
+                    int caidaRapida = velocidadSalto * 2;
+                    PosY += caidaRapida; // baja más rápido
                     if (PosY > suelo) PosY = suelo;
                 }
                 else
@@ -89,6 +107,7 @@ namespace TheRacetoSpace
                     saltando = false;
                 }
             }
+
 
             // Agacharse
             if (agachado)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,19 +16,16 @@ namespace TheRacetoSpace
 {
     public partial class Form1 : Form
     {
-      
         private Alien alien; 
         //private Timer timer;
         private Obstaculos obstaculo;
         private bool juegoActivo = true;
         private Puntaje puntaje;
+        public int Vidas; 
 
         private int velocidadFondo = 5;
-
-        // Variable para controlar que solo pierda una vida por choque
         bool colision = false;
-        //private bool pausaDeDaño = false;
-
+        
         private List<Piso> pisos = new List<Piso>();
 
 
@@ -35,7 +33,7 @@ namespace TheRacetoSpace
         {
             InitializeComponent();
 
-          
+
             pisos.Add(new Piso(pbPiso1));
             pisos.Add(new Piso(pbPiso2));
             pisos.Add(new Piso(pbPiso3));
@@ -48,12 +46,10 @@ namespace TheRacetoSpace
             
             //Inicializar Puntaje
             puntaje = new Puntaje(lbPuntaje);
-            puntaje.Iniciar(); 
-
-            
+            alien.OnFirstMovement += puntaje.Iniciar;
 
             //Eventos teclado
-            this.KeyDown += Form1_KeyDown;
+            this.KeyDown += new KeyEventHandler(Form1_KeyDown);
             this.KeyUp += Form1_KeyUp;
             this.KeyPreview = true;
 
@@ -62,14 +58,11 @@ namespace TheRacetoSpace
             //timer.Tick += Timer_Tick;
             timer1.Start(); //Timer del disenador 
 
-
-
-
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (!juegoActivo) return; // si ya perdiste, no se actualiza nada
+            if (juegoActivo == false) return; // si ya perdiste, no se actualiza nada
             obstaculo.MoverPlatillo();
 
             // 1) Guardar posición previa
@@ -79,15 +72,17 @@ namespace TheRacetoSpace
 
             bool sobrePiso = false;
 
-            // Chequear si el alien cae sobre algún piso
+            // CONTROL DE PISOS Y ALIEN
             foreach (var piso in pisos)
             {
-                if (alien.PosX + alien.GetAncho() > piso.PbPiso.Left &&
-                    alien.PosX < piso.PbPiso.Right)
+                // Alien horizontal? 
+                if (alien.PosX + alien.GetAncho() > piso.PbPiso.Left && alien.PosX < piso.PbPiso.Right)
                 {
-                    if (alien.PosY + alien.GetAltura() >= piso.PosY &&
-                        alien.PosY + alien.GetAltura() <= piso.PosY + piso.Altura + 10) // margen
+                    // Revisar si el alien está verticalmente sobre el piso (con un pequeño margen)
+                    if ((alien.PosY + alien.GetAltura() > piso.PosY - 1) &&
+                        (alien.PosY + alien.GetAltura() < piso.PosY + piso.Altura + 11))
                     {
+                        // Apoyar al alien en la parte superior del piso
                         alien.ApoyarEnPiso(piso.PosY);
                         sobrePiso = true;
                         break;
@@ -96,7 +91,7 @@ namespace TheRacetoSpace
             }
 
             //Si no está sobre ningún piso y no está saltando, cae
-            if (!sobrePiso && !alien.saltando)
+            if (sobrePiso == false && alien.saltando == false)
             {
                 alien.Caer(alien.velocidadSalto);// simula gravedad
             }
@@ -120,17 +115,18 @@ namespace TheRacetoSpace
             if (pbFondo1.Right <= this.ClientSize.Width)
                 pbFondo1.Left = 0;
 
-
             // --- COLISIONES SIMPLES ---
+            Point centroAlien = new Point(pbAlien.Left + pbAlien.Width / 2, pbAlien.Top + pbAlien.Height / 2);
+            Rectangle zonaAgujero = pbAgujero.Bounds;
+            Rectangle zonaAgujero2 = pbAgujero2.Bounds;
+
             if (pbAlien.Bounds.IntersectsWith(pbBarril.Bounds) ||
                 pbAlien.Bounds.IntersectsWith(pbBarril2.Bounds) ||
                 pbAlien.Bounds.IntersectsWith(pbBarril3.Bounds) ||
                 pbAlien.Bounds.IntersectsWith(pbBarril4.Bounds) ||
-                pbAlien.Bounds.IntersectsWith(pbAgujero.Bounds) ||
-                pbAlien.Bounds.IntersectsWith(pbAgujero2.Bounds) ||
                 pbAlien.Bounds.IntersectsWith(pbPlatillo.Bounds))
             {
-                if (!colision) // Solo al primer tick de colisión
+                if (colision == false) // Solo al primer tick de colisión
                 {
                     // Cambiar colores al chocar
                     pbAlien.BackColor = Color.DarkBlue;
@@ -149,24 +145,40 @@ namespace TheRacetoSpace
                     colision = true; // Marcar que ya se registró
 
                     // Si ya no quedan vidas
-                    if (alien.Vidas <= 0)
-                    {
-                        juegoActivo = false;
-                        timer1.Stop();
-                        puntaje.Detener();
-                        // Mostrar el formulario RESULTADO
-                        RESULTADO resultadoForm = new RESULTADO();
-                        resultadoForm.Show();
-                    }
-                    
+                    // if (alien.Vidas <= 0)
+                    // {
+                    //     juegoActivo = false;
+                    //     timer1.Stop();
+                    //     puntaje.Detener();
+                    //     
+                    //     // Mostrar el formulario RESULTADO
+                    //     RESULTADO resultadoForm = new RESULTADO();
+                    //     resultadoForm.Show();
+                    //     
+                    // }
+
                     // Retroceder a la posición previa
                     alien.Reaparecer(prevX, prevY);
-                    
+
                 }
+
+            }
+            else if (zonaAgujero.Contains(centroAlien) || zonaAgujero2.Contains(centroAlien))
+            {
+                alien.Vidas = 0;
+                ActualizarVidasUI();
+                timer1.Stop();
+                juegoActivo = false;
+                pbAlien.Visible = false;
+                puntaje.Detener();
+                
+                this.Close();
+                
+                RESULTADO resultadoForm = new RESULTADO();
+                resultadoForm.Show();
             }
             else
             {
-                // No hay colisión: restauramos colores y bandera
                 pbAlien.BackColor = Color.Transparent;
                 pbBarril.BackColor = Color.Transparent;
                 pbBarril2.BackColor = Color.Transparent;
@@ -180,56 +192,34 @@ namespace TheRacetoSpace
             }
         }
 
- 
-
-
-
-
-        
-
-
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.D)
             {
                 alien.PresionarDerecha();
-                obstaculo.ActivarPlatillo(); // aquí empieza a volar el platillo
+                obstaculo.ActivarPlatillo();
             }
             if (e.KeyCode == Keys.W) alien.PresionarSalto();
             if (e.KeyCode == Keys.S) alien.PresionarAgacharse();
-
-            //INICIO DE PUNTAJE 
-
-
-
-
-
-
-
-
-
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Right) alien.SoltarDerecha();
-            if (e.KeyCode == Keys.Down) alien.SoltarAgacharse();
+            if (e.KeyCode == Keys.D) alien.SoltarDerecha();
+            if (e.KeyCode == Keys.S) alien.SoltarAgacharse();
         }
 
         private void timerInterno_Tick(object sender, EventArgs e)
         {
-            // Actualizar al alien (mover, saltar, agacharse)
             alien.Actualizar();
-
-            
         }
         private void ActualizarVidasUI()
         {
-            pbVida1.Visible = alien.Vidas >= 1;
-            pbVida2.Visible = alien.Vidas >= 2;
+            pbVida1.Visible = alien.Vidas >= 5;
+            pbVida2.Visible = alien.Vidas >= 4;
             pbVida3.Visible = alien.Vidas >= 3;
-            pbVida4.Visible = alien.Vidas >= 4;
-            pbVida5.Visible = alien.Vidas >= 5;
+            pbVida4.Visible = alien.Vidas >= 2;
+            pbVida5.Visible = alien.Vidas >= 1;
         }
 
         private void lbPuntaje_Click(object sender, EventArgs e)
@@ -237,7 +227,16 @@ namespace TheRacetoSpace
 
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void btPAUSA_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Si entra!");
+            var pauseForm = new PAUSA();
+            pauseForm.Show();
+            
+            this.Hide();
+        }
+
+        private void pbAlien_Click(object sender, EventArgs e)
         {
 
         }

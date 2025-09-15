@@ -35,18 +35,17 @@ namespace TheRacetoSpace
             lbPuntaje.Text = $"Puntaje: {puntos}";
         }
 
-        public void Iniciar()
+        public void Iniciar(object sender, PuntajeArgs e)
         {
-            puntos = 0;
+            puntos = e.puntajeInicial;
             lbPuntaje.Text = "Puntaje: 0";
             timer.Start();
         }
 
         public void Detener()
         {
+            Console.WriteLine("Entra al stop para detener el puntaje");
             timer.Stop();
-            MessageBox.Show($"Partida terminada\nTu puntaje fue: {puntos}", "Fin del juego");
         }
-
     }
 }
